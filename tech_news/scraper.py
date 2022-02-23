@@ -9,7 +9,7 @@ from tech_news.database import create_news
 
 def fetch(url):
     try:
-        response = requests.get(url, timeout=2)
+        response = requests.get(url, timeout=10)  # 2
     except requests.ReadTimeout:
         return None
     time.sleep(1)
@@ -30,7 +30,7 @@ def scrape_novidades(html_content):
 # Requisito 3
 def scrape_next_page_link(html_content):
     selector = parsel.Selector(html_content)
-    link_next_page = selector.css("a.tec--btn::attr(href)").get()
+    link_next_page = selector.css("a.tec--btn *::attr(href)").get()
     if link_next_page is None:
         return None
     return link_next_page
@@ -91,14 +91,13 @@ def get_tech_news(amount):
     news = list()
     page = "https://www.tecmundo.com.br/novidades"
 
-    while True:
+    while len(news) < amount:
         for new in scrape_novidades(fetch(page)):
             ret_dict = scrape_noticia(fetch(new))
             news.append(ret_dict)
             if len(news) >= amount:
                 break
         page = scrape_next_page_link(fetch(page))
-        if not page or len(news) >= amount:
-            break
+
     create_news(news)
     return news
